@@ -9,5 +9,3 @@ root.render(
     <ResumeBuilder />
   </React.StrictMode>
 )
-
-
