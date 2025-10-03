@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+// html2pdf is loaded via CDN in `index.html` and exposed as a global (window.html2pdf).
+// We intentionally do not import it here so the bundle size stays small.
+
 // Import icons from lucide-react
 import { Plus, Trash2, Download, FileText, User, Briefcase, GraduationCap, Lightbulb, Link2, Mail, Phone, MapPin, Linkedin, Globe, Github, ExternalLink, ChevronDown, Loader2 } from 'lucide-react';
+// Note: html2pdf.js is now loaded via a script tag in index.html, so we don't import it here.
 
 // --- Updated Data from Nikhil Pandey's Resume ---
 const updatedData = {
@@ -24,9 +28,9 @@ const updatedData = {
   skills: "HTML, CSS, JavaScript (ES6+), React, Next.js, Node.js, PHP, MySQL, MongoDB, Git, GitHub, VS Code, OAuth",
   projects: [
     { id: 1, name: "ChatterBox - Real-time Chat App", description: "A full-stack chat platform with Google Sign-In, instant messaging via WebSockets, and MongoDB for message storage. Features include typing indicators and chat history. Tech: Next.js, Node.js, Socket.IO, OAuth 2.0.", github: "", demo: "https://chatterbox-vly4.onrender.com/" },
-    { id: 2, name: "Resume Builder App", description: "A web application that helps users easily create professional resumes with clean templates, live preview, and PDF download support. Built for simplicity and accessibility using React, HTML, CSS, and JavaScript.", github: "", demo: "https://resume-bulder-app.vercel.app/" },
-    { id: 3, name: "Fama Barber Shop - Responsive Business Site", description: "Responsive business website with dark/light mode and an interactive gallery, built with HTML, CSS, and JavaScript.", github: "", demo: "https://n2023ik-git-main-nikhil-pandeys-projects-ca529d7f.vercel.app/" },
-    { id: 4, name: "Harmony Music Player", description: "A music player with custom audio controls, a dynamic playlist, and a clean UI, created using HTML, CSS, and JavaScript.", github: "", demo: "https://harmony-player.vercel.app/" },
+    { id: 2, name: "Resume Builder App", description: "A web application that helps users easily create professional resumes with clean templates, live preview, and PDF download support. Built for simplicity and accessibility using React, HTML, CSS, and JavaScript.", github: "https://github.com/n2023ik/Resume-bulder-app", demo: "https://resume-bulder-app.vercel.app/" },
+    { id: 3, name: "Fama Barber Shop - Responsive Business Site", description: "Responsive business website with dark/light mode and an interactive gallery, built with HTML, CSS, and JavaScript.", github: "https://github.com/n2023ik/fama-barber", demo: "https://n2023ik-git-main-nikhil-pandeys-projects-ca529d7f.vercel.app/" },
+    { id: 4, name: "Harmony Music Player", description: "A music player with custom audio controls, a dynamic playlist, and a clean UI, created using HTML, CSS, and JavaScript.", github: "https://github.com/n2023ik/harmony", demo: "https://harmony-player.vercel.app/" },
   ]
 };
 
@@ -85,7 +89,7 @@ const AccordionItem = ({ title, icon, children }) => {
 };
 
 
-// --- Resume Preview Templates (No changes needed here) ---
+// --- Resume Preview Templates ---
 
 // Classic Single-Column Template
 const ClassicTemplate = ({ personal, experience, education, projects, skills }) => (
@@ -329,45 +333,28 @@ export default function ResumeBuilder() {
 
   function downloadPDF() {
     setLoading(true);
-    const printArea = document.getElementById("resume-preview");
-    if (!printArea) return;
-
-    const originalTitle = document.title;
-    document.title = `${personal.firstName || "Resume"}_${personal.lastName || ""}`.trim();
-    
-    const newWin = window.open("", "_blank");
-    if (!newWin) {
-      alert("Please allow popups to export the resume.");
-      setLoading(false);
-      return;
+    const element = document.getElementById('resume-preview');
+    if (!element) {
+        setLoading(false);
+        console.error("Resume preview element not found!");
+        return;
     }
 
-    newWin.document.write(`
-      <html>
-        <head>
-          <title>${document.title}</title>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-          <style> 
-            body { font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
-            @page { margin: 0; size: A4; }
-          </style>
-        </head>
-        <body>
-          <div style="width: 21cm; min-height: 29.7cm;">${printArea.innerHTML}</div>
-        </body>
-      </html>
-    `);
+    const opt = {
+      margin:       0,
+      filename:     `${personal.firstName || "Resume"}_${personal.lastName || ""}.pdf`.trim(),
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
 
-    newWin.document.close();
-    newWin.focus();
-
-    setTimeout(() => {
-      newWin.print();
-      newWin.close();
-      document.title = originalTitle;
-      setLoading(false);
-    }, 500);
+    // Use the html2pdf global function loaded from the CDN
+    window.html2pdf().from(element).set(opt).save().then(() => {
+        setLoading(false);
+    }).catch(err => {
+        console.error("PDF generation failed:", err);
+        setLoading(false);
+    });
   }
 
   return (
@@ -524,3 +511,4 @@ export default function ResumeBuilder() {
     </div>
   );
 }
+
