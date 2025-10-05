@@ -1,10 +1,5 @@
 import React, { useState } from "react";
-// html2pdf is loaded via CDN in `index.html` and exposed as a global (window.html2pdf).
-// We intentionally do not import it here so the bundle size stays small.
-
-// Import icons from lucide-react
-import { Plus, Trash2, Download, FileText, User, Briefcase, GraduationCap, Lightbulb, Link2, Mail, Phone, MapPin, Linkedin, Globe, Github, ExternalLink, ChevronDown, Loader2 } from 'lucide-react';
-// Note: html2pdf.js is now loaded via a script tag in index.html, so we don't import it here.
+import { Plus, Trash2, Download, FileText, User, Briefcase, GraduationCap, Lightbulb, Link2, Mail, Phone, MapPin, Linkedin, Globe, Github, ExternalLink, ChevronDown, Loader2, Eye, EyeOff, Palette, Sparkles, Star } from 'lucide-react';
 
 // --- Updated Data from Nikhil Pandey's Resume ---
 const updatedData = {
@@ -34,14 +29,16 @@ const updatedData = {
   ]
 };
 
-
 // --- Reusable UI Components ---
-const Field = ({ label, value, onChange, placeholder = "", type = "text" }) => (
-  <div>
-    <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
+const Field = ({ label, value, onChange, placeholder = "", type = "text", icon: Icon }) => (
+  <div className="group">
+    <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+      {Icon && <Icon size={16} className="text-indigo-500" />}
+      {label}
+    </label>
     <input
       type={type}
-      className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition"
+      className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm transition-all duration-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200 focus:ring-opacity-50 hover:border-slate-300"
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
@@ -49,11 +46,14 @@ const Field = ({ label, value, onChange, placeholder = "", type = "text" }) => (
   </div>
 );
 
-const Textarea = ({ label, value, onChange, placeholder = "", rows = 3 }) => (
-  <div>
-    <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
+const Textarea = ({ label, value, onChange, placeholder = "", rows = 4, icon: Icon }) => (
+  <div className="group">
+    <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+      {Icon && <Icon size={16} className="text-indigo-500" />}
+      {label}
+    </label>
     <textarea
-      className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition"
+      className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm transition-all duration-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200 focus:ring-opacity-50 hover:border-slate-300 resize-vertical"
       rows={rows}
       value={value}
       placeholder={placeholder}
@@ -62,241 +62,419 @@ const Textarea = ({ label, value, onChange, placeholder = "", rows = 3 }) => (
   </div>
 );
 
-const AccordionItem = ({ title, icon, children }) => {
-    const [isOpen, setIsOpen] = useState(true);
-    return (
-        <div className="border rounded-lg overflow-hidden mb-4 transition-all duration-300">
-            <button
-                className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100"
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <div className="flex items-center gap-3">
-                    {icon}
-                    <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
-                </div>
-                <ChevronDown
-                    size={20}
-                    className={`text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
-                />
-            </button>
-            <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="p-4 bg-white">
-                    {children}
-                </div>
-            </div>
-        </div>
-    );
-};
+const AccordionItem = ({ title, icon, children, isOpen: externalIsOpen, onToggle }) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(true);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = onToggle || setInternalIsOpen;
 
+  return (
+    <div className="border-2 border-slate-200 rounded-2xl overflow-hidden mb-4 transition-all duration-300 hover:border-slate-300 hover:shadow-md">
+      <button
+        className="w-full flex justify-between items-center p-6 bg-gradient-to-r from-slate-50 to-white hover:from-slate-100 hover:to-slate-50 transition-all duration-300"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+            {icon}
+          </div>
+          <h3 className="text-xl font-bold text-slate-800">{title}</h3>
+        </div>
+        <ChevronDown
+          size={24}
+          className={`text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="p-6 bg-white">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Resume Preview Templates ---
 
 // Classic Single-Column Template
-const ClassicTemplate = ({ personal, experience, education, projects, skills }) => (
-  <div className="bg-white p-8 font-serif text-slate-800" style={{minHeight: '29.7cm'}}>
-    <div className="text-center mb-8 border-b pb-4">
-      <h1 className="text-4xl font-bold tracking-wider uppercase">{personal.firstName} {personal.lastName}</h1>
-      <p className="text-lg mt-1">{personal.title}</p>
-    </div>
-    <div className="flex justify-center text-sm space-x-6 mb-8">
-      <span>{personal.email}</span>
-      {personal.email && personal.phone && <span>|</span>}
-      <span>{personal.phone}</span>
-      {personal.phone && personal.location && <span>|</span>}
-      <span>{personal.location}</span>
-    </div>
+const ClassicTemplate = ({ personal, experience, education, projects, skills, color = "indigo" }) => {
+  const colorClasses = {
+    indigo: { primary: "text-indigo-600", border: "border-indigo-200", bg: "bg-indigo-50" },
+    slate: { primary: "text-slate-600", border: "border-slate-200", bg: "bg-slate-50" },
+    blue: { primary: "text-blue-600", border: "border-blue-200", bg: "bg-blue-50" },
+    emerald: { primary: "text-emerald-600", border: "border-emerald-200", bg: "bg-emerald-50" },
+    amber: { primary: "text-amber-600", border: "border-amber-200", bg: "bg-amber-50" },
+    rose: { primary: "text-rose-600", border: "border-rose-200", bg: "bg-rose-50" },
+  };
 
-    {personal.summary && (
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold border-b pb-1 mb-2">Summary</h2>
-        <p className="text-sm leading-relaxed whitespace-pre-line">{personal.summary}</p>
-      </div>
-    )}
+  const colors = colorClasses[color] || colorClasses.indigo;
 
-    {experience.some(e => e.company) && (
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold border-b pb-1 mb-3">Experience</h2>
-        {experience.map((exp) => (
-          <div key={exp.id} className="mb-4">
-            <div className="flex justify-between items-baseline">
-              <h3 className="text-lg font-medium">{exp.role} at {exp.company}</h3>
-              <p className="text-sm text-slate-600">{exp.start} - {exp.end}</p>
-            </div>
-            <ul className="mt-1 list-disc list-inside text-sm text-slate-700 space-y-1">
-              {exp.bullets.filter(Boolean).map((b, i) => <li key={i}>{b}</li>)}
-            </ul>
-          </div>
-        ))}
-      </div>
-    )}
-
-    {education.some(e => e.school) && (
-       <div className="mb-6">
-        <h2 className="text-xl font-semibold border-b pb-1 mb-3">Education</h2>
-        {education.map((ed) => (
-          <div key={ed.id} className="mb-2">
-            <div className="flex justify-between">
-              <h3 className="text-lg font-medium">{ed.degree}, {ed.school}</h3>
-              <p className="text-sm text-slate-600">{ed.start} - {ed.end}</p>
-            </div>
-            {ed.notes && <p className="text-sm italic text-slate-600">{ed.notes}</p>}
-          </div>
-        ))}
-      </div>
-    )}
-
-    {projects.some(p => p.name || p.description) && (
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold border-b pb-1 mb-3">Projects</h2>
-        {projects.map((prj) => (
-          <div key={prj.id} className="mb-4">
-            <h3 className="text-lg font-medium">{prj.name}</h3>
-            {prj.description && (
-              <p className="mt-1 text-sm text-slate-700 whitespace-pre-line">{prj.description}</p>
-            )}
-            {(prj.github || prj.demo) && (
-              <div className="mt-2 flex gap-3 text-sm">
-                {prj.github && (
-                  <a className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800" href={prj.github} target="_blank" rel="noreferrer">
-                    <Github size={14} /> GitHub
-                  </a>
-                )}
-                {prj.demo && (
-                  <a className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800" href={prj.demo} target="_blank" rel="noreferrer">
-                    <ExternalLink size={14} /> Live
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    )}
-
-    {skills && (
-      <div>
-        <h2 className="text-xl font-semibold border-b pb-1 mb-3">Skills</h2>
-        <div className="flex flex-wrap gap-2">
-          {skills.split(",").map((s) => s.trim()).filter(Boolean).map((s, i) => (
-            <span key={i} className="bg-slate-200 text-slate-800 text-sm font-medium px-3 py-1 rounded-full">{s}</span>
-          ))}
+  return (
+    <div className="bg-white p-12 font-serif text-slate-800 leading-relaxed" style={{minHeight: '29.7cm'}}>
+      {/* Header */}
+      <div className="text-center mb-12 pb-8 border-b-2 border-slate-100">
+        <h1 className="text-5xl font-extrabold tracking-tight mb-3">
+          {personal.firstName} <span className={colors.primary}>{personal.lastName}</span>
+        </h1>
+        <p className="text-2xl font-semibold text-slate-600 mb-6">{personal.title}</p>
+        
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-base text-slate-600">
+          {personal.email && <a href={`mailto:${personal.email}`} className="hover:underline">{personal.email}</a>}
+          {personal.phone && <span>{personal.phone}</span>}
+          {personal.location && <span>{personal.location}</span>}
+          {personal.linkedin && <a href={`https://${personal.linkedin}`} className="hover:underline">{personal.linkedin}</a>}
+          {personal.website && <a href={`https://${personal.website}`} className="hover:underline">{personal.website}</a>}
         </div>
       </div>
-    )}
-  </div>
-);
+
+      {/* Summary */}
+      {personal.summary && (
+        <div className="mb-10">
+          <h2 className={`text-2xl font-bold ${colors.primary} border-b-2 ${colors.border} pb-3 mb-6 flex items-center gap-3`}>
+            <User size={20} />
+            Professional Summary
+          </h2>
+          <p className="text-lg leading-relaxed text-slate-700 whitespace-pre-line">
+            {personal.summary}
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-12">
+        {/* Experience */}
+        {experience.some(e => e.company) && (
+          <div>
+            <h2 className={`text-2xl font-bold ${colors.primary} border-b-2 ${colors.border} pb-3 mb-6 flex items-center gap-3`}>
+              <Briefcase size={20} />
+              Experience
+            </h2>
+            <div className="space-y-8">
+              {experience.map((exp) => (
+                <div key={exp.id} className="group">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-800">{exp.role}</h3>
+                      <p className="text-lg font-semibold text-slate-600">{exp.company}</p>
+                    </div>
+                    <p className="text-sm font-medium text-slate-500 pt-1">
+                      {exp.start} - {exp.end}
+                    </p>
+                  </div>
+                  <ul className="list-disc list-inside space-y-2 pl-2 text-slate-700">
+                    {exp.bullets.filter(Boolean).map((b, i) => <li key={i}>{b}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Projects */}
+        {projects.some(p => p.name || p.description) && (
+          <div>
+            <h2 className={`text-2xl font-bold ${colors.primary} border-b-2 ${colors.border} pb-3 mb-6 flex items-center gap-3`}>
+              <Link2 size={20} />
+              Projects
+            </h2>
+            <div className="space-y-6">
+              {projects.map((prj) => (
+                <div key={prj.id}>
+                  <h3 className="text-lg font-bold text-slate-800 mb-1">{prj.name}</h3>
+                  {prj.description && (
+                    <p className="text-slate-700 mb-2 leading-relaxed">{prj.description}</p>
+                  )}
+                  {(prj.github || prj.demo) && (
+                    <div className="flex gap-4 text-sm">
+                      {prj.github && <a className={`inline-flex items-center gap-2 font-medium ${colors.primary} hover:underline`} href={prj.github} target="_blank" rel="noreferrer">GitHub</a>}
+                      {prj.demo && <a className={`inline-flex items-center gap-2 font-medium ${colors.primary} hover:underline`} href={prj.demo} target="_blank" rel="noreferrer">Live Demo</a>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Education */}
+        {education.some(e => e.school) && (
+          <div>
+            <h2 className={`text-2xl font-bold ${colors.primary} border-b-2 ${colors.border} pb-3 mb-6 flex items-center gap-3`}>
+              <GraduationCap size={20} />
+              Education
+            </h2>
+            <div className="space-y-6">
+              {education.map((ed) => (
+                <div key={ed.id}>
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="text-lg font-bold text-slate-800">{ed.school}</h3>
+                    <p className="text-sm font-medium text-slate-500">{ed.start} - {ed.end}</p>
+                  </div>
+                  <p className="text-slate-700 font-semibold">{ed.degree}</p>
+                  {ed.notes && <p className="text-sm text-slate-600 italic">{ed.notes}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Skills */}
+        {skills && (
+          <div>
+            <h2 className={`text-2xl font-bold ${colors.primary} border-b-2 ${colors.border} pb-3 mb-6 flex items-center gap-3`}>
+              <Lightbulb size={20} />
+              Skills
+            </h2>
+            <p className="text-slate-700">{skills}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // Modern Template with a Sidebar
-const ModernTemplate = ({ personal, experience, education, projects, skills }) => {
+const ModernTemplate = ({ personal, experience, education, projects, skills, color = "indigo" }) => {
+  const colorClasses = {
+    indigo: { primary: "text-indigo-600", bg: "bg-indigo-700", lightBg: "bg-indigo-50" },
+    slate: { primary: "text-slate-600", bg: "bg-slate-700", lightBg: "bg-slate-50" },
+    blue: { primary: "text-blue-600", bg: "bg-blue-700", lightBg: "bg-blue-50" },
+    emerald: { primary: "text-emerald-600", bg: "bg-emerald-700", lightBg: "bg-emerald-50" },
+    amber: { primary: "text-amber-600", bg: "bg-amber-700", lightBg: "bg-amber-50" },
+    rose: { primary: "text-rose-600", bg: "bg-rose-700", lightBg: "bg-rose-50" },
+  };
+
+  const colors = colorClasses[color] || colorClasses.indigo;
+
   const ContactInfo = ({ icon: Icon, text, href }) => (
     text && (
-        <a href={href} target="_blank" rel="noreferrer" className="flex items-center gap-2 mb-2 hover:text-indigo-300 transition-colors">
-            <Icon size={14} />
-            <span className="break-all">{text.replace(/https?:\/\//, '')}</span>
-        </a>
+      <a href={href} target="_blank" rel="noreferrer" className="flex items-center gap-4 text-indigo-100 hover:text-white transition-colors group">
+        <div className="p-2 bg-white bg-opacity-10 rounded-full group-hover:bg-opacity-20 transition-all">
+          <Icon size={16} />
+        </div>
+        <span className="break-all text-sm">{text.replace(/https?:\/\//, '')}</span>
+      </a>
     )
   );
 
   return (
-    <div className="flex min-w-full bg-white" style={{minHeight: '29.7cm'}}>
-      <div className="w-1/3 bg-slate-800 text-white p-6 font-sans">
-        <h1 className="text-3xl font-bold">{personal.firstName}</h1>
-        <h1 className="text-3xl font-bold mb-2">{personal.lastName}</h1>
-        <p className="text-lg text-slate-300 mb-8">{personal.title}</p>
-
-        <h2 className="text-sm font-bold uppercase tracking-widest border-b border-slate-500 pb-1 mb-4">Contact</h2>
-        <div className="text-sm mb-8">
-          <ContactInfo icon={Mail} text={personal.email} href={`mailto:${personal.email}`} />
-          <ContactInfo icon={Phone} text={personal.phone} href={`tel:${personal.phone}`} />
-          <ContactInfo icon={MapPin} text={personal.location} />
-          <ContactInfo icon={Linkedin} text={personal.linkedin} href={`https://${personal.linkedin}`} />
-          <ContactInfo icon={Globe} text={personal.website} href={`https://${personal.website}`} />
+    <div className="flex min-w-full bg-white font-sans" style={{minHeight: '29.7cm'}}>
+      {/* Sidebar */}
+      <div className={`w-1/3 ${colors.bg} text-white p-10`}>
+        <div className="text-center mb-12">
+          <div className="w-32 h-32 bg-white bg-opacity-20 rounded-full mx-auto mb-6 flex items-center justify-center border-4 border-white border-opacity-30">
+            <User size={56} className="text-white" />
+          </div>
+          <h1 className="text-4xl font-bold leading-tight">{personal.firstName}</h1>
+          <h1 className="text-4xl font-bold leading-tight">{personal.lastName}</h1>
+          <p className="text-xl font-light text-indigo-200 mt-2">{personal.title}</p>
         </div>
 
-        {education.some(e => e.school) && (
-          <>
-            <h2 className="text-sm font-bold uppercase tracking-widest border-b border-slate-500 pb-1 mb-4">Education</h2>
-            <div className="text-sm mb-8">
-              {education.map(ed => (
-                <div key={ed.id} className="mb-3">
-                  <p className="font-semibold">{ed.school}</p>
-                  <p className="text-slate-300">{ed.degree}</p>
-                  <p className="text-xs text-slate-400">{ed.start} - {ed.end}</p>
-                </div>
-              ))}
+        <div className="space-y-10">
+          <div>
+            <h2 className="text-lg font-bold uppercase tracking-widest text-indigo-200 border-b-2 border-indigo-500 pb-2 mb-4">Contact</h2>
+            <div className="space-y-3">
+              <ContactInfo icon={Mail} text={personal.email} href={`mailto:${personal.email}`} />
+              <ContactInfo icon={Phone} text={personal.phone} href={`tel:${personal.phone}`} />
+              <ContactInfo icon={MapPin} text={personal.location} />
+              <ContactInfo icon={Linkedin} text={personal.linkedin} href={`https://${personal.linkedin}`} />
+              <ContactInfo icon={Globe} text={personal.website} href={`https://${personal.website}`} />
             </div>
-          </>
-        )}
-
-        {skills && (
-          <>
-            <h2 className="text-sm font-bold uppercase tracking-widest border-b border-slate-500 pb-1 mb-4">Skills</h2>
-            <div className="flex flex-wrap gap-2 text-xs">
-              {skills.split(",").map(s => s.trim()).filter(Boolean).map((s, i) => (
-                <span key={i} className="bg-slate-600 px-2 py-1 rounded">{s}</span>
-              ))}
+          </div>
+          {education.some(e => e.school) && (
+            <div>
+              <h2 className="text-lg font-bold uppercase tracking-widest text-indigo-200 border-b-2 border-indigo-500 pb-2 mb-4">Education</h2>
+              <div className="space-y-4">
+                {education.map(ed => (
+                  <div key={ed.id}>
+                    <p className="font-semibold text-white">{ed.school}</p>
+                    <p className="text-indigo-100 text-sm">{ed.degree}</p>
+                    <p className="text-indigo-300 text-xs">{ed.start} - {ed.end}</p>
+                    {ed.notes && <p className="text-indigo-200 text-xs mt-1 italic">{ed.notes}</p>}
+                  </div>
+                ))}
+              </div>
             </div>
-          </>
-        )}
+          )}
+          {skills && (
+            <div>
+              <h2 className="text-lg font-bold uppercase tracking-widest text-indigo-200 border-b-2 border-indigo-500 pb-2 mb-4">Skills</h2>
+              <div className="flex flex-wrap gap-2">
+                {skills.split(",").map(s => s.trim()).filter(Boolean).map((s, i) => (
+                  <span key={i} className="bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-xs font-medium">{s}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="w-2/3 p-8 font-sans">
+      {/* Main Content */}
+      <div className="w-2/3 p-12">
         {personal.summary && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-slate-700 border-b-2 border-slate-300 pb-2 mb-4">Summary</h2>
-            <p className="text-sm leading-relaxed whitespace-pre-line">{personal.summary}</p>
+          <div className="mb-10">
+            <h2 className={`text-3xl font-bold ${colors.primary} border-b-4 ${colors.primary.replace('text-', 'border-')} pb-3 mb-6 flex items-center gap-4`}>
+              <User size={28} /> Professional Summary
+            </h2>
+            <p className="text-lg leading-relaxed text-slate-700">{personal.summary}</p>
           </div>
         )}
-
         {experience.some(e => e.company) && (
-            <div>
-            <h2 className="text-xl font-bold text-slate-700 border-b-2 border-slate-300 pb-2 mb-4">Experience</h2>
-            {experience.map(exp => (
-              <div key={exp.id} className="mb-6">
-                <div className="flex justify-between items-baseline">
-                  <h3 className="text-lg font-semibold">{exp.role}</h3>
-                  <p className="text-sm text-slate-500">{exp.start} - {exp.end}</p>
+          <div className="mb-10">
+            <h2 className={`text-3xl font-bold ${colors.primary} border-b-4 ${colors.primary.replace('text-', 'border-')} pb-3 mb-6 flex items-center gap-4`}>
+              <Briefcase size={28} /> Experience
+            </h2>
+            <div className="space-y-8">
+              {experience.map(exp => (
+                <div key={exp.id}>
+                  <div className="flex justify-between items-baseline mb-2">
+                    <h3 className="text-2xl font-bold text-slate-800">{exp.role}</h3>
+                    <p className="text-sm font-medium text-slate-500">{exp.start} - {exp.end}</p>
+                  </div>
+                  <p className="text-xl font-semibold text-slate-600 mb-3">{exp.company}</p>
+                  <ul className="list-disc list-inside space-y-2 pl-2 text-slate-700">
+                    {exp.bullets.filter(Boolean).map((b, i) => <li key={i}>{b}</li>)}
+                  </ul>
                 </div>
-                <p className="text-md text-slate-600 mb-2">{exp.company}</p>
-                <ul className="list-disc list-inside text-sm space-y-1 text-slate-700">
-                  {exp.bullets.filter(Boolean).map((b, i) => <li key={i}>{b}</li>)}
-                </ul>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
-
         {projects.some(p => p.name || p.description) && (
-          <div className="mt-8">
-            <h2 className="text-xl font-bold text-slate-700 border-b-2 border-slate-300 pb-2 mb-4">Projects</h2>
-            {projects.map(prj => (
-              <div key={prj.id} className="mb-6">
-                <div className="flex justify-between items-baseline">
-                  <h3 className="text-lg font-semibold">{prj.name}</h3>
-                  <div className="flex gap-3 text-sm">
-                    {prj.github && (
-                      <a className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800" href={prj.github} target="_blank" rel="noreferrer">
-                        <Github size={14} /> GitHub
-                      </a>
-                    )}
-                    {prj.demo && (
-                      <a className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800" href={prj.demo} target="_blank" rel="noreferrer">
-                        <ExternalLink size={14} /> Live
-                      </a>
-                    )}
+          <div>
+            <h2 className={`text-3xl font-bold ${colors.primary} border-b-4 ${colors.primary.replace('text-', 'border-')} pb-3 mb-6 flex items-center gap-4`}>
+              <Link2 size={28} /> Projects
+            </h2>
+            <div className="space-y-6">
+              {projects.map(prj => (
+                <div key={prj.id}>
+                  <h3 className="text-xl font-bold text-slate-800">{prj.name}</h3>
+                  <p className="text-slate-700 leading-relaxed mb-2">{prj.description}</p>
+                  <div className="flex gap-4">
+                    {prj.github && <a className={`inline-flex items-center gap-2 font-medium ${colors.primary} hover:underline`} href={prj.github} target="_blank" rel="noreferrer"><Github size={16} /> GitHub</a>}
+                    {prj.demo && <a className={`inline-flex items-center gap-2 font-medium ${colors.primary} hover:underline`} href={prj.demo} target="_blank" rel="noreferrer"><ExternalLink size={16} /> Live</a>}
                   </div>
                 </div>
-                {prj.description && (
-                  <p className="text-sm text-slate-700 mt-1 whitespace-pre-line">{prj.description}</p>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 };
+
+// Creative Template
+const CreativeTemplate = ({ personal, experience, education, projects, skills, color = "indigo" }) => {
+  const colorClasses = {
+    indigo: { primary: "text-indigo-600", bg: "bg-indigo-600", lightBg: "bg-indigo-50" },
+    slate: { primary: "text-slate-600", bg: "bg-slate-600", lightBg: "bg-slate-50" },
+    blue: { primary: "text-blue-600", bg: "bg-blue-600", lightBg: "bg-blue-50" },
+    emerald: { primary: "text-emerald-600", bg: "bg-emerald-600", lightBg: "bg-emerald-50" },
+    amber: { primary: "text-amber-600", bg: "bg-amber-600", lightBg: "bg-amber-50" },
+    rose: { primary: "text-rose-600", bg: "bg-rose-600", lightBg: "bg-rose-50" },
+  };
+
+  const colors = colorClasses[color] || colorClasses.indigo;
+
+  return (
+    <div className="bg-white p-10 font-sans" style={{minHeight: '29.7cm'}}>
+      <div className="grid grid-cols-3 gap-10">
+        {/* Left Column */}
+        <div className="col-span-1 space-y-8">
+          <div className="text-center">
+            <div className={`w-40 h-40 ${colors.lightBg} rounded-full mx-auto mb-6 flex items-center justify-center ring-4 ring-offset-4 ring-indigo-200`}>
+              <User size={72} className={colors.primary} />
+            </div>
+            <h1 className="text-3xl font-black text-slate-800">{personal.firstName} {personal.lastName}</h1>
+            <p className={`text-lg font-semibold ${colors.primary} mt-1`}>{personal.title}</p>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 border-b-2 border-slate-200 pb-2 mb-3">CONTACT</h3>
+              <div className="space-y-2 text-sm text-slate-700">
+                {personal.email && <p className="flex items-center gap-2"><Mail size={14} /> {personal.email}</p>}
+                {personal.phone && <p className="flex items-center gap-2"><Phone size={14} /> {personal.phone}</p>}
+                {personal.location && <p className="flex items-center gap-2"><MapPin size={14} /> {personal.location}</p>}
+                {personal.linkedin && <p className="flex items-center gap-2"><Linkedin size={14} /> {personal.linkedin}</p>}
+                {personal.website && <p className="flex items-center gap-2"><Globe size={14} /> {personal.website}</p>}
+              </div>
+            </div>
+            {education.some(e => e.school) && (
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 border-b-2 border-slate-200 pb-2 mb-3">EDUCATION</h3>
+                {education.map(ed => (
+                  <div key={ed.id} className="mb-4">
+                    <p className="font-bold text-slate-800">{ed.school}</p>
+                    <p className="text-sm text-slate-700">{ed.degree}</p>
+                    <p className="text-xs text-slate-500">{ed.start} - {ed.end}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {skills && (
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 border-b-2 border-slate-200 pb-2 mb-3">SKILLS</h3>
+                <div className="flex flex-wrap gap-2">
+                  {skills.split(',').map(s => s.trim()).filter(Boolean).map((skill, i) => (
+                    <span key={i} className={`px-3 py-1 text-sm rounded-full ${colors.lightBg} ${colors.primary}`}>{skill}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Right Column */}
+        <div className="col-span-2 space-y-10">
+          {personal.summary && (
+            <div>
+              <h2 className={`text-2xl font-extrabold ${colors.primary} mb-4`}>PROFILE</h2>
+              <p className="text-slate-700 leading-relaxed">{personal.summary}</p>
+            </div>
+          )}
+
+          {experience.some(e => e.company) && (
+            <div>
+              <h2 className={`text-2xl font-extrabold ${colors.primary} mb-4`}>WORK EXPERIENCE</h2>
+              <div className="space-y-6">
+                {experience.map(exp => (
+                  <div key={exp.id} className="relative pl-6">
+                    <div className={`absolute left-0 top-1.5 w-3 h-3 rounded-full ${colors.bg}`}></div>
+                    <p className="text-xs text-slate-500">{exp.start} - {exp.end}</p>
+                    <h3 className="text-lg font-bold text-slate-800">{exp.role}</h3>
+                    <p className="text-md font-semibold text-slate-600 mb-2">{exp.company}</p>
+                    <ul className="list-disc list-inside text-slate-700 space-y-1">
+                      {exp.bullets.filter(Boolean).map((b, i) => <li key={i}>{b}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {projects.some(p => p.name) && (
+            <div>
+              <h2 className={`text-2xl font-extrabold ${colors.primary} mb-4`}>PROJECTS</h2>
+              <div className="space-y-4">
+                {projects.map(prj => (
+                  <div key={prj.id}>
+                     <h3 className="text-lg font-bold text-slate-800">{prj.name}</h3>
+                     <p className="text-slate-700">{prj.description}</p>
+                     <div className="flex gap-4 mt-1">
+                        {prj.github && <a className={`text-sm ${colors.primary} hover:underline`} href={prj.github} target="_blank" rel="noreferrer">GitHub</a>}
+                        {prj.demo && <a className={`text-sm ${colors.primary} hover:underline`} href={prj.demo} target="_blank" rel="noreferrer">Demo</a>}
+                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 export default function ResumeBuilder() {
   const [personal, setPersonal] = useState(updatedData.personal);
@@ -306,8 +484,17 @@ export default function ResumeBuilder() {
   const [projects, setProjects] = useState(updatedData.projects);
   
   const [template, setTemplate] = useState("modern");
+  const [colorScheme, setColorScheme] = useState("indigo");
   const [loading, setLoading] = useState(false);
-  
+  const [previewMode, setPreviewMode] = useState(true);
+  const [openSections, setOpenSections] = useState({
+    personal: true,
+    skills: true,
+    education: true,
+    experience: true,
+    projects: true
+  });
+
   // Handlers
   function updatePersonal(field, value) { setPersonal((p) => ({ ...p, [field]: value })); }
   function addEducation() { setEducation((e) => [...e, { id: Date.now(), school: "", degree: "", start: "", end: "", notes: "" }]); }
@@ -323,6 +510,10 @@ export default function ResumeBuilder() {
   function updateProjectField(id, field, value) { setProjects((list) => list.map((it) => (it.id === id ? { ...it, [field]: value } : it))); }
   function removeProject(id) { setProjects((list) => list.filter((it) => it.id !== id)); }
   
+  function toggleSection(section) {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  }
+
   function resetData() {
     setPersonal(updatedData.personal);
     setEducation(updatedData.education);
@@ -348,7 +539,6 @@ export default function ResumeBuilder() {
       jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
 
-    // Use the html2pdf global function loaded from the CDN
     window.html2pdf().from(element).set(opt).save().then(() => {
         setLoading(false);
     }).catch(err => {
@@ -358,157 +548,294 @@ export default function ResumeBuilder() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8 font-sans">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* --- CONTROLS / FORM PANEL --- */}
-        <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center gap-3 mb-6">
-                    <FileText className="text-indigo-600" size={28}/>
-                    <h2 className="text-2xl font-bold text-slate-800">Resume Builder</h2>
-                </div>
-                
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Template</label>
-                    <select className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" value={template} onChange={(e) => setTemplate(e.target.value)}>
-                        <option value="modern">Modern</option>
-                        <option value="classic">Classic</option>
-                    </select>
-                </div>
-
-                <AccordionItem title="Personal Info" icon={<User size={20} className="text-slate-600"/>}>
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="First name" value={personal.firstName} onChange={(v) => updatePersonal("firstName", v)} />
-                            <Field label="Last name" value={personal.lastName} onChange={(v) => updatePersonal("lastName", v)} />
-                        </div>
-                        <Field label="Professional title" value={personal.title} onChange={(v) => updatePersonal("title", v)} />
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Email" type="email" value={personal.email} onChange={(v) => updatePersonal("email", v)} />
-                            <Field label="Phone" type="tel" value={personal.phone} onChange={(v) => updatePersonal("phone", v)} />
-                        </div>
-                        <Field label="Location" value={personal.location} onChange={(v) => updatePersonal("location", v)} />
-                        <Field label="LinkedIn" value={personal.linkedin} onChange={(v) => updatePersonal("linkedin", v)} placeholder="linkedin.com/in/..." />
-                        <Field label="Website" value={personal.website} onChange={(v) => updatePersonal("website", v)} placeholder="your-portfolio.com" />
-                        <Textarea label="Summary" value={personal.summary} onChange={(v) => updatePersonal("summary", v)} placeholder="Short professional summary..."/>
-                    </div>
-                </AccordionItem>
-
-                <AccordionItem title="Skills" icon={<Lightbulb size={20} className="text-slate-600"/>}>
-                    <Field label="Skills (comma separated)" value={skills} onChange={(v) => setSkills(v)} placeholder="e.g. JavaScript, React, CSS" />
-                </AccordionItem>
-
-                <AccordionItem title="Education" icon={<GraduationCap size={20} className="text-slate-600"/>}>
-                    {education.map((edu, i) => (
-                      <div key={edu.id} className={`p-3 my-3 bg-slate-50 rounded-lg relative ${i > 0 ? 'mt-4' : ''}`}>
-                          <div className="space-y-3">
-                              <Field label="School" value={edu.school} onChange={(v) => updateEducation(edu.id, "school", v)} />
-                              <Field label="Degree" value={edu.degree} onChange={(v) => updateEducation(edu.id, "degree", v)} />
-                              <div className="grid grid-cols-2 gap-3">
-                                  <Field label="Start" value={edu.start} onChange={(v) => updateEducation(edu.id, "start", v)} />
-                                  <Field label="End" value={edu.end} onChange={(v) => updateEducation(edu.id, "end", v)} />
-                              </div>
-                              <Field label="Notes" value={edu.notes} onChange={(v) => updateEducation(edu.id, "notes", v)} />
-                          </div>
-                          <button className="absolute top-2 right-2 text-red-500 hover:text-red-700" onClick={() => removeEducation(edu.id)}>
-                              <Trash2 size={16} />
-                          </button>
-                        </div>
-                    ))}
-                    <button className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium mt-2" onClick={addEducation}>
-                        <Plus size={16} /> Add education
-                    </button>
-                </AccordionItem>
-                
-                <AccordionItem title="Experience" icon={<Briefcase size={20} className="text-slate-600"/>}>
-                    {experience.map((exp, i) => (
-                      <div key={exp.id} className={`p-3 my-3 bg-slate-50 rounded-lg relative ${i > 0 ? 'mt-4' : ''}`}>
-                          <div className="space-y-3">
-                              <Field label="Company" value={exp.company} onChange={(v) => updateExperienceField(exp.id, "company", v)} />
-                              <Field label="Role" value={exp.role} onChange={(v) => updateExperienceField(exp.id, "role", v)} />
-                              <div className="grid grid-cols-2 gap-3">
-                                  <Field label="Start" value={exp.start} onChange={(v) => updateExperienceField(exp.id, "start", v)} />
-                                  <Field label="End" value={exp.end} onChange={(v) => updateExperienceField(exp.id, "end", v)} />
-                              </div>
-                          </div>
-                          <div className="mt-3">
-                              <label className="block text-sm font-medium text-slate-600 mb-1">Bullets</label>
-                              {exp.bullets.map((b, i) => (
-                                <div key={i} className="flex gap-2 items-start mt-1">
-                                  <textarea className="flex-1 w-full rounded-md border-slate-300 text-sm shadow-sm" rows={2} value={b} onChange={(e) => updateBullet(exp.id, i, e.target.value)} />
-                                  <button className="text-red-500 hover:text-red-700 mt-1" onClick={() => removeBullet(exp.id, i)}> <Trash2 size={16} /> </button>
-                                </div>
-                              ))}
-                              <button className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium mt-2" onClick={() => addBullet(exp.id)}>
-                                <Plus size={14} /> Add bullet
-                              </button>
-                          </div>
-                          <button className="absolute top-2 right-2 text-red-500 hover:text-red-700" onClick={() => removeExperience(exp.id)}>
-                              <Trash2 size={16} />
-                          </button>
-                        </div>
-                    ))}
-                    <button className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium mt-2" onClick={addExperience}>
-                        <Plus size={16} /> Add experience
-                    </button>
-                </AccordionItem>
-
-                <AccordionItem title="Projects" icon={<Link2 size={20} className="text-slate-600"/>}>
-                    {projects.map((prj, i) => (
-                      <div key={prj.id} className={`p-3 my-3 bg-slate-50 rounded-lg relative ${i > 0 ? 'mt-4' : ''}`}>
-                          <div className="space-y-3">
-                              <Field label="Project name" value={prj.name} onChange={(v) => updateProjectField(prj.id, "name", v)} />
-                              <Textarea label="Description" rows={3} value={prj.description} onChange={(v) => updateProjectField(prj.id, "description", v)} />
-                              <div className="grid grid-cols-2 gap-3">
-                                  <Field label="GitHub URL" value={prj.github} onChange={(v) => updateProjectField(prj.id, "github", v)} placeholder="https://github.com/..." />
-                                  <Field label="Live URL" value={prj.demo} onChange={(v) => updateProjectField(prj.id, "demo", v)} placeholder="https://..." />
-                              </div>
-                          </div>
-                          <button className="absolute top-2 right-2 text-red-500 hover:text-red-700" onClick={() => removeProject(prj.id)}>
-                              <Trash2 size={16} />
-                          </button>
-                        </div>
-                    ))}
-                    <button className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium mt-2" onClick={addProject}>
-                        <Plus size={16} /> Add project
-                    </button>
-                </AccordionItem>
-                
-                {/* --- ACTION BUTTONS --- */}
-                <div className="flex gap-3 pt-6 mt-4 border-t">
-                    <button 
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700 transition-colors disabled:bg-indigo-400" 
-                        onClick={downloadPDF}
-                        disabled={loading}
-                    >
-                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                        {loading ? 'Exporting...' : 'Export PDF'}
-                    </button>
-                    <button className="w-full px-4 py-2 rounded-md border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors" onClick={resetData}>
-                        Reset
-                    </button>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8 font-sans">
+      <div className="max-w-8xl mx-auto grid grid-cols-1 xl:grid-cols-4 gap-8">
+        
+        {/* --- SIDEBAR / CONTROLS PANEL --- */}
+        <div className="xl:col-span-1 space-y-6">
+          {/* Header Card */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-white">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl">
+                <FileText className="text-white" size={32}/>
+              </div>
+              <div>
+                <h2 className="text-3xl font-black bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                  Resume Builder
+                </h2>
+                <p className="text-slate-600 text-sm">Create your perfect resume</p>
+              </div>
             </div>
-        </div>
 
-        {/* --- RESUME PREVIEW PANEL --- */}
-        <div className="lg:col-span-2">
-          <div className="bg-white p-6 rounded-xl shadow-lg sticky top-8">
-            <h3 className="text-lg font-semibold text-slate-700 mb-4">Preview</h3>
-            <div className="bg-slate-200 p-4 sm:p-8 rounded-lg">
-                <div id="resume-preview" className="bg-slate-50 border rounded-md overflow-hidden shadow-lg mx-auto" style={{width: '21cm', minHeight: '29.7cm'}}>
-                    {template === "modern"
-                        ? <ModernTemplate personal={personal} experience={experience} education={education} projects={projects} skills={skills} />
-                        : <ClassicTemplate personal={personal} experience={experience} education={education} projects={projects} skills={skills} />
-                    }
+            {/* Template & Color Selection */}
+            <div className="space-y-6 mb-8">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                  <Palette size={16} />
+                  Template Style
+                </label>
+                <select 
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm transition-all duration-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200"
+                  value={template} 
+                  onChange={(e) => setTemplate(e.target.value)}
+                >
+                  <option value="modern">Modern</option>
+                  <option value="classic">Classic</option>
+                  <option value="creative">Creative</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3">Color Scheme</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {["indigo", "slate", "blue", "emerald", "amber", "rose"].map(color => (
+                    <button
+                      key={color}
+                      onClick={() => setColorScheme(color)}
+                      className={`h-10 rounded-xl border-2 transition-all duration-300 ${
+                        colorScheme === color 
+                          ? `border-${color}-500 shadow-lg scale-105` 
+                          : 'border-slate-200 hover:border-slate-300'
+                      } bg-${color}-500 hover:scale-110`}
+                    />
+                  ))}
                 </div>
+              </div>
+
+              <button
+                onClick={() => setPreviewMode(!previewMode)}
+                className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-slate-800 text-white font-semibold hover:bg-slate-900 transition-all duration-300 hover:shadow-lg"
+              >
+                {previewMode ? <EyeOff size={20} /> : <Eye size={20} />}
+                {previewMode ? 'Hide Preview' : 'Show Preview'}
+              </button>
+            </div>
+          </div>
+
+          {/* Form Sections */}
+          <div className={`space-y-4 transition-all duration-500 ${previewMode ? 'opacity-100' : 'opacity-100'}`}>
+            <AccordionItem 
+              title="Personal Info" 
+              icon={<User size={20} className="text-indigo-600"/>}
+              isOpen={openSections.personal}
+              onToggle={() => toggleSection('personal')}
+            >
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="First name" value={personal.firstName} onChange={(v) => updatePersonal("firstName", v)} icon={User} />
+                  <Field label="Last name" value={personal.lastName} onChange={(v) => updatePersonal("lastName", v)} icon={User} />
+                </div>
+                <Field label="Professional title" value={personal.title} onChange={(v) => updatePersonal("title", v)} icon={Briefcase} />
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Email" type="email" value={personal.email} onChange={(v) => updatePersonal("email", v)} icon={Mail} />
+                  <Field label="Phone" type="tel" value={personal.phone} onChange={(v) => updatePersonal("phone", v)} icon={Phone} />
+                </div>
+                <Field label="Location" value={personal.location} onChange={(v) => updatePersonal("location", v)} icon={MapPin} />
+                <Field label="LinkedIn" value={personal.linkedin} onChange={(v) => updatePersonal("linkedin", v)} placeholder="linkedin.com/in/..." icon={Linkedin} />
+                <Field label="Website" value={personal.website} onChange={(v) => updatePersonal("website", v)} placeholder="your-portfolio.com" icon={Globe} />
+                <Textarea label="Summary" value={personal.summary} onChange={(v) => updatePersonal("summary", v)} placeholder="Short professional summary..." icon={FileText} />
+              </div>
+            </AccordionItem>
+
+            <AccordionItem 
+              title="Skills" 
+              icon={<Star size={20} className="text-indigo-600"/>}
+              isOpen={openSections.skills}
+              onToggle={() => toggleSection('skills')}
+            >
+              <Field label="Skills (comma separated)" value={skills} onChange={(v) => setSkills(v)} placeholder="e.g. JavaScript, React, CSS" icon={Lightbulb} />
+            </AccordionItem>
+
+            <AccordionItem 
+              title="Education" 
+              icon={<GraduationCap size={20} className="text-indigo-600"/>}
+              isOpen={openSections.education}
+              onToggle={() => toggleSection('education')}
+            >
+              {education.map((edu, i) => (
+                <div key={edu.id} className={`p-6 my-4 bg-slate-50 rounded-2xl border-2 border-slate-200 relative transition-all duration-300 hover:border-slate-300 ${i > 0 ? 'mt-6' : ''}`}>
+                  <div className="space-y-4">
+                    <Field label="School" value={edu.school} onChange={(v) => updateEducation(edu.id, "school", v)} icon={GraduationCap} />
+                    <Field label="Degree" value={edu.degree} onChange={(v) => updateEducation(edu.id, "degree", v)} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Start year" value={edu.start} onChange={(v) => updateEducation(edu.id, "start", v)} />
+                      <Field label="End year" value={edu.end} onChange={(v) => updateEducation(edu.id, "end", v)} />
+                    </div>
+                    <Field label="Notes" value={edu.notes} onChange={(v) => updateEducation(edu.id, "notes", v)} placeholder="Certifications, achievements..." />
+                  </div>
+                  <button
+                    onClick={() => removeEducation(edu.id)}
+                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={addEducation}
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl border-2 border-dashed border-slate-300 text-slate-600 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 font-semibold"
+              >
+                <Plus size={20} />
+                Add Education
+              </button>
+            </AccordionItem>
+
+            <AccordionItem 
+              title="Experience" 
+              icon={<Briefcase size={20} className="text-indigo-600"/>}
+              isOpen={openSections.experience}
+              onToggle={() => toggleSection('experience')}
+            >
+              {experience.map((exp, i) => (
+                <div key={exp.id} className={`p-6 my-4 bg-slate-50 rounded-2xl border-2 border-slate-200 relative transition-all duration-300 hover:border-slate-300 ${i > 0 ? 'mt-6' : ''}`}>
+                  <div className="space-y-4">
+                    <Field label="Company" value={exp.company} onChange={(v) => updateExperienceField(exp.id, "company", v)} icon={Briefcase} />
+                    <Field label="Role" value={exp.role} onChange={(v) => updateExperienceField(exp.id, "role", v)} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Start date" value={exp.start} onChange={(v) => updateExperienceField(exp.id, "start", v)} />
+                      <Field label="End date" value={exp.end} onChange={(v) => updateExperienceField(exp.id, "end", v)} />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold text-slate-700">Responsibilities</label>
+                      {exp.bullets.map((b, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <input
+                            className="flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm transition-all duration-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200"
+                            value={b}
+                            placeholder="Describe your responsibilities..."
+                            onChange={(e) => updateBullet(exp.id, idx, e.target.value)}
+                          />
+                          <button
+                            onClick={() => removeBullet(exp.id, idx)}
+                            className="px-4 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => addBullet(exp.id)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-300 font-medium"
+                      >
+                        <Plus size={16} />
+                        Add responsibility
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeExperience(exp.id)}
+                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={addExperience}
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl border-2 border-dashed border-slate-300 text-slate-600 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 font-semibold"
+              >
+                <Plus size={20} />
+                Add Experience
+              </button>
+            </AccordionItem>
+
+            <AccordionItem 
+              title="Projects" 
+              icon={<Link2 size={20} className="text-indigo-600"/>}
+              isOpen={openSections.projects}
+              onToggle={() => toggleSection('projects')}
+            >
+              {projects.map((prj, i) => (
+                <div key={prj.id} className={`p-6 my-4 bg-slate-50 rounded-2xl border-2 border-slate-200 relative transition-all duration-300 hover:border-slate-300 ${i > 0 ? 'mt-6' : ''}`}>
+                  <div className="space-y-4">
+                    <Field label="Project name" value={prj.name} onChange={(v) => updateProjectField(prj.id, "name", v)} icon={Link2} />
+                    <Textarea label="Description" value={prj.description} onChange={(v) => updateProjectField(prj.id, "description", v)} rows={3} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="GitHub URL" value={prj.github} onChange={(v) => updateProjectField(prj.id, "github", v)} placeholder="https://..." />
+                      <Field label="Live Demo URL" value={prj.demo} onChange={(v) => updateProjectField(prj.id, "demo", v)} placeholder="https://..." />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeProject(prj.id)}
+                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={addProject}
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl border-2 border-dashed border-slate-300 text-slate-600 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300 font-semibold"
+              >
+                <Plus size={20} />
+                Add Project
+              </button>
+            </AccordionItem>
+
+            {/* Action Buttons */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 border-2 border-white space-y-4">
+              <button
+                onClick={downloadPDF}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+                {loading ? 'Generating PDF...' : 'Download PDF'}
+              </button>
+              
+              <button
+                onClick={resetData}
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl border-2 border-slate-300 text-slate-700 font-semibold hover:border-slate-400 hover:bg-slate-50 transition-all duration-300"
+              >
+                Reset to Sample Data
+              </button>
             </div>
           </div>
         </div>
-        
+
+        {/* --- PREVIEW PANEL --- */}
+        <div className={`xl:col-span-3 transition-all duration-500 ${previewMode ? 'opacity-100' : 'opacity-40'}`}>
+          <div className="sticky top-8">
+            <div className="bg-white rounded-2xl shadow-2xl border-2 border-white overflow-hidden">
+              <div className="bg-slate-800 text-white p-6 flex justify-between items-center">
+                <div>
+                  <h3 className="text-2xl font-black">Resume Preview</h3>
+                  <p className="text-slate-300">Real-time preview of your resume</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 bg-slate-700 px-4 py-2 rounded-xl">
+                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium">Live Preview</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-slate-100 p-8 min-h-screen">
+                <div id="resume-preview" className="bg-white shadow-2xl rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-3xl">
+                  {template === "modern" && (
+                    <ModernTemplate 
+                      personal={personal} experience={experience} education={education}
+                      projects={projects} skills={skills} color={colorScheme}
+                    />
+                  )}
+                  {template === "classic" && (
+                     <ClassicTemplate 
+                      personal={personal} experience={experience} education={education}
+                      projects={projects} skills={skills} color={colorScheme}
+                    />
+                  )}
+                  {template === "creative" && (
+                     <CreativeTemplate 
+                      personal={personal} experience={experience} education={education}
+                      projects={projects} skills={skills} color={colorScheme}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
